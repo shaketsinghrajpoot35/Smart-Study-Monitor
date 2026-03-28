@@ -39,4 +39,10 @@ public class AnalyticsController {
         User user = getAuthenticatedUser(auth);
         return analyticsService.getMonthlyAnalytics(user);
     }
+
+    @GetMapping("/today")
+    public DailyReport getToday(Authentication auth) {
+        User user = getAuthenticatedUser(auth);
+        return analyticsService.getTodayAnalytics(user);
+    }
 }

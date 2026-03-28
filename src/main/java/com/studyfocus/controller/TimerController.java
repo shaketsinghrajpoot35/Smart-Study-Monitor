@@ -36,11 +36,19 @@ public class TimerController {
         }
     }
 
+    @PostMapping("/timer/stop")
+    public void stop(Authentication auth) {
+        User user = getUser(auth);
+        if (user != null) {
+            timerService.stopTimer(user);
+        }
+    }
+
     @GetMapping("/timer")
     public Map<String, Object> getTimer(Authentication auth) {
         User user = getUser(auth);
         TimerService.TimerState state = timerService.getTimerForUser(user);
-        
+
         return Map.of(
                 "mode", state.mode.name(),
                 "remaining", state.remainingSeconds

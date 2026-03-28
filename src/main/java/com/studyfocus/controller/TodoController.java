@@ -49,12 +49,11 @@ public class TodoController {
         User user = getUser(auth);
         if (user == null) return;
         todoService.startTodo(user, id);
-        
-        // Also start timer locally for the specific todo
-        TodoTask task = todoService.getAllTodos(user).stream().filter(t -> t.getId().equals(id)).findFirst().orElse(null);
-        if (task != null) {
-            timerService.startForTodo(user, id, task.getPlannedStudyMinutes(), task.getPlannedBreakMinutes());
-        }
+
+        // Direct single-fetch — avoids loading all todos just to find one
+        todoService.getTodoById(user, id).ifPresent(task ->
+            timerService.startForTodo(user, id, task.getPlannedStudyMinutes(), task.getPlannedBreakMinutes())
+        );
     }
 
     @PostMapping("/{id}/complete")

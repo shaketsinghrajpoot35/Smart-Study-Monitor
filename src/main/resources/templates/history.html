@@ -2,128 +2,429 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Analytics History - StudyFocus</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="StudyFocus Analytics - Review your weekly and monthly study performance, focus trends, and session history.">
+    <title>Analytics — StudyFocus</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0f172a;
+            background-image:
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%),
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,0.5) 0, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,0.2) 0, transparent 50%);
+            background-attachment: fixed;
+            color: white;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1.25rem;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-panel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
+        }
+
+        .stat-card {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.6);
+        }
+
+        .tab-btn {
+            transition: all 0.25s ease;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            box-shadow: 0 0 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .tab-btn:not(.active) {
+            background: rgba(255, 255, 255, 0.05);
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .tab-btn:not(.active):hover {
+            background: rgba(255, 255, 255, 0.10);
+            color: white;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="min-h-screen pb-12">
 
 <!-- NAVBAR -->
-<nav class="bg-gradient-to-r from-blue-700 to-indigo-800 text-white p-4 shadow-lg sticky top-0 z-50">
-    <div class="container mx-auto flex justify-between items-center">
-        <div class="flex items-center space-x-3">
-            <i class="fas fa-chart-line text-2xl"></i>
-            <h1 class="text-xl font-bold tracking-wider">StudyFocus Analytics</h1>
+<nav class="glass-panel mx-auto max-w-7xl mt-6 p-4 px-6 flex justify-between items-center z-50 relative">
+    <a href="/home" class="flex items-center space-x-3 group">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:shadow-blue-400/50 transition-all duration-300">
+            <i class="fas fa-brain text-white"></i>
         </div>
-        <div class="flex items-center space-x-4">
-            <a href="/dashboard" class="px-4 py-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition"><i class="fas fa-tv mr-2"></i>Live Dashboard</a>
-            <form th:action="@{/logout}" method="post" class="inline">
-                <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition shadow-md"><i class="fas fa-sign-out-alt mr-2"></i>Logout</button>
-            </form>
+        <div>
+            <h1 class="text-xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 group-hover:from-blue-300 group-hover:to-purple-300 transition-all duration-300">StudyFocus</h1>
+            <p class="text-xs text-gray-400 group-hover:text-gray-300">Analytics & History</p>
         </div>
+    </a>
+
+    <div class="flex items-center space-x-4">
+        <a href="/dashboard" class="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5">
+            <i class="fas fa-tv mr-2"></i>Live Dashboard
+        </a>
+        <a href="/export/csv" class="px-4 py-2 text-sm font-medium text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-xl transition border border-emerald-500/20">
+            <i class="fas fa-file-csv mr-2"></i>CSV
+        </a>
+        <a href="/export/excel" class="px-4 py-2 text-sm font-medium text-green-300 bg-green-500/10 hover:bg-green-500/20 rounded-xl transition border border-green-500/20">
+            <i class="fas fa-file-excel mr-2"></i>Excel
+        </a>
+        <form th:action="@{/logout}" method="post" class="inline">
+            <button type="submit" class="px-4 py-2 text-sm font-medium bg-red-500/20 hover:bg-red-500/40 text-red-300 border border-red-500/30 rounded-xl transition">
+                <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
+            </button>
+        </form>
     </div>
 </nav>
 
-<div class="container mx-auto mt-8 px-4">
-    <div class="mb-8 flex justify-between items-end">
+<div class="max-w-7xl mx-auto mt-8 px-4">
+
+    <!-- Page Title + Tab Controls -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
-            <h2 class="text-3xl font-bold text-gray-800">Your Study History</h2>
-            <p class="text-gray-500 mt-1">Review your weekly performance and focus trends.</p>
+            <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400">Study Analytics</h2>
+            <p class="text-gray-400 mt-1 text-sm">Your performance trends and session breakdown</p>
         </div>
-        <div>
-            <button onclick="loadWeeklyData()" class="bg-blue-600 text-white px-4 py-2 rounded-l-lg hover:bg-blue-700">7 Days</button>
-            <button onclick="loadMonthlyData()" class="bg-indigo-600 text-white px-4 py-2 rounded-r-lg hover:bg-indigo-700 border-l border-indigo-800">30 Days</button>
+        <div class="flex space-x-2 bg-black/20 p-1 rounded-xl border border-white/5">
+            <button id="btn7" onclick="setRange(7)" class="tab-btn active px-5 py-2">
+                <i class="fas fa-calendar-week mr-1"></i>7 Days
+            </button>
+            <button id="btn30" onclick="setRange(30)" class="tab-btn px-5 py-2">
+                <i class="fas fa-calendar-alt mr-1"></i>30 Days
+            </button>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        
+    <!-- Summary Stat Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        <div class="stat-card p-5">
+            <div class="flex items-center justify-between mb-3">
+                <p class="text-xs text-gray-400 uppercase tracking-widest font-semibold">Total Study</p>
+                <div class="w-9 h-9 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                    <i class="fas fa-clock text-blue-400 text-sm"></i>
+                </div>
+            </div>
+            <p id="statTotalStudy" class="text-3xl font-black text-white">—</p>
+            <p class="text-xs text-gray-500 mt-1">hours this period</p>
+        </div>
+
+        <div class="stat-card p-5">
+            <div class="flex items-center justify-between mb-3">
+                <p class="text-xs text-gray-400 uppercase tracking-widest font-semibold">Avg Focus</p>
+                <div class="w-9 h-9 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                    <i class="fas fa-bullseye text-purple-400 text-sm"></i>
+                </div>
+            </div>
+            <p id="statAvgFocus" class="text-3xl font-black text-white">—</p>
+            <p class="text-xs text-gray-500 mt-1">average score / 100</p>
+        </div>
+
+        <div class="stat-card p-5">
+            <div class="flex items-center justify-between mb-3">
+                <p class="text-xs text-gray-400 uppercase tracking-widest font-semibold">Best Day</p>
+                <div class="w-9 h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                    <i class="fas fa-trophy text-emerald-400 text-sm"></i>
+                </div>
+            </div>
+            <p id="statBestDay" class="text-xl font-black text-white leading-tight">—</p>
+            <p class="text-xs text-gray-500 mt-1">highest focus score</p>
+        </div>
+
+        <div class="stat-card p-5">
+            <div class="flex items-center justify-between mb-3">
+                <p class="text-xs text-gray-400 uppercase tracking-widest font-semibold">Break Time</p>
+                <div class="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                    <i class="fas fa-mug-hot text-amber-400 text-sm"></i>
+                </div>
+            </div>
+            <p id="statBreakTime" class="text-3xl font-black text-white">—</p>
+            <p class="text-xs text-gray-500 mt-1">hours resting</p>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+
         <!-- Focus Score Chart -->
-        <div class="bg-white rounded-xl shadow-md p-6">
-            <h3 class="text-xl font-semibold mb-4 text-gray-700"><i class="fas fa-bullseye text-red-500 mr-2"></i>Average Focus Score</h3>
-            <canvas id="focusChart" height="200"></canvas>
+        <div class="glass-panel p-6">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-lg font-bold flex items-center">
+                    <i class="fas fa-bullseye text-purple-400 mr-2"></i>Focus Score Trend
+                </h3>
+                <span class="text-xs text-gray-500 bg-black/20 px-2 py-1 rounded-lg">Out of 100</span>
+            </div>
+            <div class="relative h-52">
+                <canvas id="focusChart"></canvas>
+            </div>
         </div>
 
-        <!-- Time Track Chart -->
-        <div class="bg-white rounded-xl shadow-md p-6">
-            <h3 class="text-xl font-semibold mb-4 text-gray-700"><i class="fas fa-clock text-green-500 mr-2"></i>Study vs Break Time</h3>
-            <canvas id="timeChart" height="200"></canvas>
+        <!-- Study vs Break Chart -->
+        <div class="glass-panel p-6">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-lg font-bold flex items-center">
+                    <i class="fas fa-chart-bar text-emerald-400 mr-2"></i>Study vs Break Time
+                </h3>
+                <div class="flex text-xs space-x-3">
+                    <span class="flex items-center text-emerald-300"><span class="w-2 h-2 rounded-sm bg-emerald-400 mr-1 inline-block"></span>Study</span>
+                    <span class="flex items-center text-blue-300"><span class="w-2 h-2 rounded-sm bg-blue-400 mr-1 inline-block"></span>Break</span>
+                </div>
+            </div>
+            <div class="relative h-52">
+                <canvas id="timeChart"></canvas>
+            </div>
         </div>
 
     </div>
+
+    <!-- Data Table -->
+    <div class="glass-panel p-6">
+        <h3 class="text-lg font-bold flex items-center mb-5">
+            <i class="fas fa-table text-blue-400 mr-2"></i>Daily Breakdown
+        </h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left border-b border-white/10">
+                        <th class="pb-3 pr-4 text-xs text-gray-400 font-semibold uppercase tracking-wider">Date</th>
+                        <th class="pb-3 pr-4 text-xs text-gray-400 font-semibold uppercase tracking-wider">Study Time</th>
+                        <th class="pb-3 pr-4 text-xs text-gray-400 font-semibold uppercase tracking-wider">Break Time</th>
+                        <th class="pb-3 pr-4 text-xs text-gray-400 font-semibold uppercase tracking-wider">Focus Score</th>
+                        <th class="pb-3 text-xs text-gray-400 font-semibold uppercase tracking-wider">Rating</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody" class="divide-y divide-white/5">
+                    <tr><td colspan="5" class="py-8 text-center text-gray-500 italic">Loading data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 
 <script>
     let focusChart, timeChart;
+    let currentRange = 7;
 
-    const renderCharts = (labels, focusData, studyData, breakData) => {
-        // Destroy old if exists
-        if(focusChart) focusChart.destroy();
-        if(timeChart) timeChart.destroy();
+    function setRange(days) {
+        currentRange = days;
+        document.getElementById('btn7').classList.toggle('active', days === 7);
+        document.getElementById('btn30').classList.toggle('active', days === 30);
+        const url = days === 7 ? '/api/analytics/weekly' : '/api/analytics/monthly';
+        fetchAndRender(url);
+    }
 
+    // Dark theme defaults for all charts
+    Chart.defaults.color = '#64748b';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+
+    function renderCharts(labels, focusData, studyData, breakData) {
+        if (focusChart) focusChart.destroy();
+        if (timeChart) timeChart.destroy();
+
+        const commonTooltip = {
+            backgroundColor: 'rgba(15,23,42,0.95)',
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1,
+            titleColor: '#94a3b8',
+            bodyColor: '#e2e8f0',
+            padding: 10
+        };
+
+        // Focus Chart
         const fCtx = document.getElementById('focusChart').getContext('2d');
         focusChart = new Chart(fCtx, {
             type: 'line',
             data: {
-                labels: labels,
+                labels,
                 datasets: [{
-                    label: 'Focus Score / 100',
+                    label: 'Focus Score',
                     data: focusData,
-                    borderColor: 'rgb(239, 68, 68)',
-                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                    fill: true,
-                    tension: 0.3
+                    borderColor: 'rgba(168, 85, 247, 0.9)',
+                    backgroundColor: 'rgba(168, 85, 247, 0.15)',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: 'rgba(168, 85, 247, 1)',
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    tension: 0.4,
+                    fill: true
                 }]
             },
-            options: { scales: { y: { min: 0, max: 100 } } }
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: commonTooltip
+                },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 11 } } },
+                    y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 11 } } }
+                }
+            }
         });
 
+        // Time Chart
         const tCtx = document.getElementById('timeChart').getContext('2d');
         timeChart = new Chart(tCtx, {
             type: 'bar',
             data: {
-                labels: labels,
+                labels,
                 datasets: [
                     {
-                        label: 'Study Minutes',
+                        label: 'Study Min',
                         data: studyData,
-                        backgroundColor: 'rgba(34, 197, 94, 0.8)'
+                        backgroundColor: 'rgba(52, 211, 153, 0.75)',
+                        borderColor: 'rgba(52, 211, 153, 0.9)',
+                        borderWidth: 1.5,
+                        borderRadius: 6
                     },
                     {
-                        label: 'Break Minutes',
+                        label: 'Break Min',
                         data: breakData,
-                        backgroundColor: 'rgba(59, 130, 246, 0.8)'
+                        backgroundColor: 'rgba(79, 172, 254, 0.65)',
+                        borderColor: 'rgba(79, 172, 254, 0.9)',
+                        borderWidth: 1.5,
+                        borderRadius: 6
                     }
                 ]
             },
-            options: { stacked: true }
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: commonTooltip
+                },
+                scales: {
+                    x: { stacked: false, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 11 } } },
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 11 } } }
+                }
+            }
         });
     }
 
-    const fetchData = async (url) => {
+    function renderTable(data) {
+        const tbody = document.getElementById('dataTableBody');
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-gray-500 italic">No data yet for this period.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.map(d => {
+            const studyMin = Math.floor(d.totalStudySeconds / 60);
+            const breakMin = Math.floor(d.totalBreakSeconds / 60);
+            const score = d.averageFocusScore;
+            const scoreClass = score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-blue-400' : score >= 40 ? 'text-yellow-400' : 'text-red-400';
+            const rating = score >= 80 ? '🔥 Excellent' : score >= 60 ? '🙂 Good' : score >= 40 ? '⚠ Low' : score > 0 ? '❌ Poor' : '— No data';
+            const dateStr = new Date(d.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+            return `
+            <tr class="hover:bg-white/5 transition">
+                <td class="py-3 pr-4 font-medium text-gray-200">${dateStr}</td>
+                <td class="py-3 pr-4">
+                    <span class="text-emerald-300 font-semibold">${studyMin}m</span>
+                    ${studyMin >= 60 ? `<span class="text-xs text-gray-500 ml-1">(${(studyMin/60).toFixed(1)}h)</span>` : ''}
+                </td>
+                <td class="py-3 pr-4 text-blue-300 font-semibold">${breakMin}m</td>
+                <td class="py-3 pr-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="${scoreClass} font-bold">${score}/100</span>
+                        <div class="w-16 h-1.5 bg-black/30 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r ${score >= 80 ? 'from-emerald-500 to-teal-400' : score >= 60 ? 'from-blue-500 to-purple-500' : 'from-yellow-500 to-orange-500'} rounded-full" style="width:${score}%"></div>
+                        </div>
+                    </div>
+                </td>
+                <td class="py-3 text-xs font-semibold ${scoreClass}">${rating}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function renderStats(data) {
+        if (!data || data.length === 0) return;
+        const totalStudySec = data.reduce((sum, d) => sum + d.totalStudySeconds, 0);
+        const totalBreakSec = data.reduce((sum, d) => sum + d.totalBreakSeconds, 0);
+        const avgFocus = Math.round(data.reduce((sum, d) => sum + d.averageFocusScore, 0) / data.filter(d => d.averageFocusScore > 0).length) || 0;
+        const bestDay = data.reduce((best, d) => d.averageFocusScore > (best?.averageFocusScore || 0) ? d : best, null);
+
+        document.getElementById('statTotalStudy').innerText = (totalStudySec / 3600).toFixed(1) + 'h';
+        document.getElementById('statAvgFocus').innerText = avgFocus + '/100';
+        document.getElementById('statBreakTime').innerText = (totalBreakSec / 3600).toFixed(1) + 'h';
+        if (bestDay) {
+            const bd = new Date(bestDay.date);
+            document.getElementById('statBestDay').innerText =
+                bd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' (' + bestDay.averageFocusScore + ')';
+        }
+    }
+
+    async function fetchAndRender(url) {
         try {
             const response = await fetch(url);
             const data = await response.json();
-            
-            const labels = data.map(d => d.date);
+
+            const labels = data.map(d => {
+                const dt = new Date(d.date);
+                return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
             const focus = data.map(d => d.averageFocusScore);
             const study = data.map(d => Math.floor(d.totalStudySeconds / 60));
             const breakTime = data.map(d => Math.floor(d.totalBreakSeconds / 60));
 
             renderCharts(labels, focus, study, breakTime);
+            renderTable(data);
+            renderStats(data);
         } catch (error) {
             console.error("Error fetching analytics", error);
         }
-    };
+    }
 
-    const loadWeeklyData = () => fetchData('/api/analytics/weekly');
-    const loadMonthlyData = () => fetchData('/api/analytics/monthly');
-
-    // Initial load
-    window.onload = loadWeeklyData;
+    window.onload = () => setRange(7);
 </script>
 
 </body>

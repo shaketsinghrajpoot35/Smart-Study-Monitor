@@ -35,6 +35,10 @@ public class TodoService {
         return repo.findByUser(user);
     }
 
+    public Optional<TodoTask> getTodoById(User user, Long id) {
+        return repo.findByIdAndUser(id, user);
+    }
+
     public void deleteTodo(User user, Long id) {
         repo.findByIdAndUser(id, user).ifPresent(repo::delete);
     }
@@ -84,16 +88,16 @@ public class TodoService {
         });
     }
 
-    public void addStudySecond(User user) {
+    public void addStudySeconds(User user, int seconds) {
         repo.findByUserAndActiveTrue(user).ifPresent(todo -> {
-            todo.setActualStudySeconds(todo.getActualStudySeconds() + 1);
+            todo.setActualStudySeconds(todo.getActualStudySeconds() + seconds);
             repo.save(todo);
         });
     }
 
-    public void addBreakSecond(User user) {
+    public void addBreakSeconds(User user, int seconds) {
         repo.findByUserAndActiveTrue(user).ifPresent(todo -> {
-            todo.setActualBreakSeconds(todo.getActualBreakSeconds() + 1);
+            todo.setActualBreakSeconds(todo.getActualBreakSeconds() + seconds);
             repo.save(todo);
         });
     }

@@ -16,6 +16,11 @@ public class PageController {
         return "dashboard"; // templates/dashboard.html
     }
     
+    @GetMapping("/home")
+    public String home() {
+        return "home"; // templates/home.html
+    }
+    
     @GetMapping("/history")
     public String history() {
         return "history"; // templates/history.html

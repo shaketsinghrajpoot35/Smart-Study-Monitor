@@ -28,4 +28,17 @@ public class AnalyticsService {
         LocalDate lastMonth = today.minusDays(30);
         return dailyReportRepository.findByUserAndDateBetweenOrderByDateAsc(user, lastMonth, today);
     }
+
+    public DailyReport getTodayAnalytics(User user) {
+        if (user == null) return new DailyReport();
+        return dailyReportRepository.findByUserAndDate(user, LocalDate.now())
+                .orElseGet(() -> {
+                    DailyReport empty = new DailyReport();
+                    empty.setDate(LocalDate.now());
+                    empty.setTotalStudySeconds(0);
+                    empty.setTotalBreakSeconds(0);
+                    empty.setAverageFocusScore(0);
+                    return empty;
+                });
+    }
 }

@@ -22,6 +22,8 @@ public class TimerService {
         public int breakSeconds;
         public Long activeTodoId;
         public User user;
+        public int pendingStudySeconds = 0;
+        public int pendingBreakSeconds = 0;
     }
 
     private final Map<Long, TimerState> userTimers = new ConcurrentHashMap<>();
@@ -55,22 +57,62 @@ public class TimerService {
         state.activeTodoId = todoId;
     }
 
+    public synchronized void stopTimer(User user) {
+        if (user == null) return;
+        TimerState state = getTimerForUser(user);
+        // Flush any accumulated pending seconds before stopping
+        if (state.pendingStudySeconds > 0) {
+            todoService.addStudySeconds(user, state.pendingStudySeconds);
+            dataSaverService.addStudyOrBreakTime(user, true, state.pendingStudySeconds);
+            state.pendingStudySeconds = 0;
+        }
+        if (state.pendingBreakSeconds > 0) {
+            todoService.addBreakSeconds(user, state.pendingBreakSeconds);
+            dataSaverService.addStudyOrBreakTime(user, false, state.pendingBreakSeconds);
+            state.pendingBreakSeconds = 0;
+        }
+        state.mode = Mode.IDLE;
+        state.remainingSeconds = 0;
+        state.activeTodoId = null;
+    }
+
     @Scheduled(fixedRate = 1000)
     public synchronized void tick() {
         for (TimerState state : userTimers.values()) {
             if (state.mode == Mode.IDLE) continue;
 
             if (state.mode == Mode.STUDY) {
-                todoService.addStudySecond(state.user);
-                dataSaverService.addStudyOrBreakTime(state.user, true, 1);
+                state.pendingStudySeconds++;
             } else if (state.mode == Mode.BREAK) {
-                todoService.addBreakSecond(state.user);
-                dataSaverService.addStudyOrBreakTime(state.user, false, 1);
+                state.pendingBreakSeconds++;
+            }
+
+            if (state.pendingStudySeconds >= 60) {
+                todoService.addStudySeconds(state.user, state.pendingStudySeconds);
+                dataSaverService.addStudyOrBreakTime(state.user, true, state.pendingStudySeconds);
+                state.pendingStudySeconds = 0;
+            }
+            if (state.pendingBreakSeconds >= 60) {
+                todoService.addBreakSeconds(state.user, state.pendingBreakSeconds);
+                dataSaverService.addStudyOrBreakTime(state.user, false, state.pendingBreakSeconds);
+                state.pendingBreakSeconds = 0;
             }
 
             if (state.remainingSeconds > 0) {
                 state.remainingSeconds--;
                 continue;
+            }
+            
+            // Flush remaining pending
+            if (state.pendingStudySeconds > 0) {
+                todoService.addStudySeconds(state.user, state.pendingStudySeconds);
+                dataSaverService.addStudyOrBreakTime(state.user, true, state.pendingStudySeconds);
+                state.pendingStudySeconds = 0;
+            }
+            if (state.pendingBreakSeconds > 0) {
+                todoService.addBreakSeconds(state.user, state.pendingBreakSeconds);
+                dataSaverService.addStudyOrBreakTime(state.user, false, state.pendingBreakSeconds);
+                state.pendingBreakSeconds = 0;
             }
 
             if (state.mode == Mode.STUDY) {

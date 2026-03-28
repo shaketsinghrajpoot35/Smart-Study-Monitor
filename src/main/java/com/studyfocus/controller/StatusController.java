@@ -13,7 +13,7 @@ public class StatusController {
     private final StatusService statusService;
     private final com.studyfocus.service.DataSaverService dataSaverService;
     private final com.studyfocus.repository.UserRepository userRepository;
-    private long lastSavedTime = 0;
+    private final java.util.Map<Long, Long> userLastSavedTime = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Autowired
     public StatusController(StatusService statusService, 
@@ -33,13 +33,16 @@ public class StatusController {
 
         StatusInfo info = statusService.getCurrentStatus(user);
         long now = System.currentTimeMillis();
-        
-        // Save focus data historically every 60 seconds
-        if (now - lastSavedTime > 60000 && user != null) {
-            int score = (info.isFaceDetected() && !info.isDrowsy()) ? 90 : 50;
-            info.setFocusScore(score);
-            dataSaverService.saveFocusSnapshot(user, score, info.isFaceDetected(), info.isDrowsy(), info.isNoisy() ? 80 : 30);
-            lastSavedTime = now;
+
+        if (user != null) {
+            long lastSave = userLastSavedTime.getOrDefault(user.getId(), 0L);
+            if (now - lastSave > 60000) {
+                // Use actual computed focus score — NOT hardcoded
+                int score = info.getFocusScore();
+                int noiseLevel = info.isNoisy() ? 80 : 20;
+                dataSaverService.saveFocusSnapshot(user, score, info.isFaceDetected(), info.isDrowsy(), noiseLevel);
+                userLastSavedTime.put(user.getId(), now);
+            }
         }
         return info;
     }

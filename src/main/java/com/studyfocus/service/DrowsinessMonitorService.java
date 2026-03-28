@@ -6,7 +6,13 @@ import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 
 @Service
@@ -31,15 +37,30 @@ public class DrowsinessMonitorService {
     public DrowsinessMonitorService(CameraService cameraService) {
         this.cameraService = cameraService;
 
-        faceDetector = new CascadeClassifier(
-                "src/main/resources/haarcascade/haarcascade_frontalface_default.xml"
-        );
-        eyeDetector = new CascadeClassifier(
-                "src/main/resources/haarcascade/haarcascade_eye.xml"
-        );
+        faceDetector = new CascadeClassifier(resolveCascade("haarcascade/haarcascade_frontalface_default.xml"));
+        eyeDetector  = new CascadeClassifier(resolveCascade("haarcascade/haarcascade_eye.xml"));
 
-        System.out.println("✅ Face cascade loaded");
-        System.out.println("✅ Eye cascade loaded");
+        if (faceDetector.empty()) System.err.println("⚠ Face cascade failed to load!");
+        else System.out.println("✅ Face cascade loaded");
+
+        if (eyeDetector.empty()) System.err.println("⚠ Eye cascade failed to load!");
+        else System.out.println("✅ Eye cascade loaded");
+    }
+
+    /**
+     * Resolves a classpath resource to an absolute temp file path so OpenCV can load it.
+     * Works in both IDE (file system) and JAR (classpath) deployments.
+     */
+    private String resolveCascade(String resourcePath) {
+        try {
+            ClassPathResource res = new ClassPathResource(resourcePath);
+            Path tmpFile = Files.createTempFile("cascade_", ".xml");
+            tmpFile.toFile().deleteOnExit();
+            Files.copy(res.getInputStream(), tmpFile, StandardCopyOption.REPLACE_EXISTING);
+            return tmpFile.toAbsolutePath().toString();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load cascade: " + resourcePath, e);
+        }
     }
 
     // ================= BACKGROUND THREAD =================

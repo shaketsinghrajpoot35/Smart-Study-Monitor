@@ -28,7 +28,14 @@ public class TodoTask {
     
     private boolean active;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     // ===== GETTERS / SETTERS =====
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 
     public boolean isActive() {
 		return active;

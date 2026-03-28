@@ -1,9 +1,14 @@
 package com.studyfocus.controller;
 
 import com.studyfocus.entity.TodoTask;
+import com.studyfocus.entity.User;
+import com.studyfocus.repository.UserRepository;
 import com.studyfocus.service.TodoService;
+import com.studyfocus.service.TimerService;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -11,38 +16,56 @@ import java.util.List;
 public class TodoController {
 
     private final TodoService todoService;
+    private final UserRepository userRepository;
+    private final TimerService timerService;
 
-    public TodoController(TodoService todoService) {
+    public TodoController(TodoService todoService, UserRepository userRepository, TimerService timerService) {
         this.todoService = todoService;
+        this.userRepository = userRepository;
+        this.timerService = timerService;
     }
 
-    // ✅ ADD TODO
+    private User getUser(Authentication auth) {
+        if (auth == null) return null;
+        return userRepository.findByUsername(auth.getName()).orElse(null);
+    }
+
     @PostMapping
-    public TodoTask addTodo(@RequestBody TodoTask todo) {
-        return todoService.addTodo(todo);
+    public TodoTask addTodo(Authentication auth, @RequestBody TodoTask todo) {
+        User user = getUser(auth);
+        if (user == null) return null;
+        return todoService.addTodo(user, todo);
     }
 
-    // ✅ GET ALL TODOS
     @GetMapping
-    public List<TodoTask> getTodos() {
-        return todoService.getAllTodos();
+    public List<TodoTask> getTodos(Authentication auth) {
+        User user = getUser(auth);
+        if (user == null) return Collections.emptyList();
+        return todoService.getAllTodos(user);
     }
 
-    // ▶ START TODO
     @PostMapping("/{id}/start")
-    public void startTodo(@PathVariable Long id) {
-        todoService.startTodo(id);
+    public void startTodo(Authentication auth, @PathVariable Long id) {
+        User user = getUser(auth);
+        if (user == null) return;
+        todoService.startTodo(user, id);
+        
+        // Also start timer locally for the specific todo
+        TodoTask task = todoService.getAllTodos(user).stream().filter(t -> t.getId().equals(id)).findFirst().orElse(null);
+        if (task != null) {
+            timerService.startForTodo(user, id, task.getPlannedStudyMinutes(), task.getPlannedBreakMinutes());
+        }
     }
 
-    // ✅ COMPLETE TODO
     @PostMapping("/{id}/complete")
-    public void completeTodo(@PathVariable Long id) {
-        todoService.completeTodo(id);
+    public void completeTodo(Authentication auth, @PathVariable Long id) {
+        User user = getUser(auth);
+        if (user != null) todoService.completeTodo(user, id);
     }
 
-    // ❌ DELETE TODO
     @DeleteMapping("/{id}")
-    public void deleteTodo(@PathVariable Long id) {
-        todoService.deleteTodo(id);
+    public void deleteTodo(Authentication auth, @PathVariable Long id) {
+        User user = getUser(auth);
+        if (user != null) todoService.deleteTodo(user, id);
     }
 }

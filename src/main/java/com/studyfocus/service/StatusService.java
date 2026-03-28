@@ -1,5 +1,6 @@
 package com.studyfocus.service;
 
+import com.studyfocus.entity.User;
 import com.studyfocus.model.StatusInfo;
 import org.springframework.stereotype.Service;
 
@@ -23,14 +24,15 @@ public class StatusService {
         this.noiseMonitor = noiseMonitor;
     }
 
-    public StatusInfo getCurrentStatus() {
+    public StatusInfo getCurrentStatus(User user) {
 
         StatusInfo status = new StatusInfo();
 
         // ===== TIMER STATUS =====
-        String mode = timer.getMode().name();
+        TimerService.TimerState tState = timer.getTimerForUser(user);
+        String mode = tState.mode.name();
         status.setCurrentStatus(mode);
-        status.setRemainingSeconds(timer.getRemainingSeconds());
+        status.setRemainingSeconds(tState.remainingSeconds);
 
         // ===== FACE / DROWSY =====
         boolean faceDetected = monitor.isFaceDetected();
@@ -85,7 +87,8 @@ public class StatusService {
         // ==================================================
         // ===== FINAL ALARM LOGIC (UNCHANGED)
         // ==================================================
-        if (!timer.isBreakTime()) {
+        boolean isBreakTime = tState.mode == TimerService.Mode.BREAK;
+        if (!isBreakTime) {
 
             if (!faceDetected) {
                 alarm.play("noface");

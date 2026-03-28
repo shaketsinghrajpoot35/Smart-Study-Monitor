@@ -15,4 +15,9 @@ public class PageController {
     public String dashboard() {
         return "dashboard"; // templates/dashboard.html
     }
+    
+    @GetMapping("/history")
+    public String history() {
+        return "history"; // templates/history.html
+    }
 }

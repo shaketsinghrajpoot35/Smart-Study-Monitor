@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.studyfocus.entity.TodoTask;
+import com.studyfocus.entity.User;
 import com.studyfocus.model.TodoStatus;
 import com.studyfocus.repository.TodoRepository;
 
@@ -20,10 +21,9 @@ public class TodoService {
         this.repo = repo;
     }
 
-    /* =================================================
-       ADD TODO
-    ================================================= */
-    public TodoTask addTodo(TodoTask todo) {
+    public TodoTask addTodo(User user, TodoTask todo) {
+        if (user == null) throw new RuntimeException("User required");
+        todo.setUser(user);
         todo.setStatus(TodoStatus.PENDING);
         todo.setActive(false);
         todo.setActualStudySeconds(0);
@@ -31,41 +31,26 @@ public class TodoService {
         return repo.save(todo);
     }
 
-    /* =================================================
-       GET ALL TODOS
-    ================================================= */
-    public List<TodoTask> getAllTodos() {
-        return repo.findAll();
+    public List<TodoTask> getAllTodos(User user) {
+        return repo.findByUser(user);
     }
 
-    /* =================================================
-       DELETE TODO
-    ================================================= */
-    public void deleteTodo(Long id) {
-        repo.deleteById(id);
+    public void deleteTodo(User user, Long id) {
+        repo.findByIdAndUser(id, user).ifPresent(repo::delete);
     }
 
-    /* =================================================
-       ACTIVE TODO
-    ================================================= */
-    public Optional<TodoTask> getActiveTodo() {
-        return repo.findByActiveTrue();
+    public Optional<TodoTask> getActiveTodo(User user) {
+        return repo.findByUserAndActiveTrue(user);
     }
 
-    /* =================================================
-       START TODO
-    ================================================= */
-    public void startTodo(Long id) {
-
-        // ⏸ Pause any currently active todo
-        repo.findByActiveTrue().ifPresent(active -> {
+    public void startTodo(User user, Long id) {
+        repo.findByUserAndActiveTrue(user).ifPresent(active -> {
             active.setActive(false);
             active.setStatus(TodoStatus.PAUSED);
             repo.save(active);
         });
 
-        // ▶ Start selected todo
-        TodoTask todo = repo.findById(id)
+        TodoTask todo = repo.findByIdAndUser(id, user)
                 .orElseThrow(() -> new RuntimeException("Todo not found"));
 
         todo.setActive(true);
@@ -73,11 +58,17 @@ public class TodoService {
         repo.save(todo);
     }
 
-    /* =================================================
-       COMPLETE TODO
-    ================================================= */
-    public void completeTodo(Long id) {
-        TodoTask todo = repo.findById(id)
+    public void completeTodo(User user, Long id) {
+        if (id == null) {
+            getActiveTodo(user).ifPresent(todo -> {
+                todo.setActive(false);
+                todo.setStatus(TodoStatus.COMPLETED);
+                repo.save(todo);
+            });
+            return;
+        }
+
+        TodoTask todo = repo.findByIdAndUser(id, user)
                 .orElseThrow(() -> new RuntimeException("Todo not found"));
 
         todo.setActive(false);
@@ -85,34 +76,24 @@ public class TodoService {
         repo.save(todo);
     }
 
-    /* =================================================
-       PAUSE ACTIVE TODO
-    ================================================= */
-    public void pauseActiveTodo() {
-        repo.findByActiveTrue().ifPresent(todo -> {
+    public void pauseActiveTodo(User user) {
+        repo.findByUserAndActiveTrue(user).ifPresent(todo -> {
             todo.setActive(false);
             todo.setStatus(TodoStatus.PAUSED);
             repo.save(todo);
         });
     }
 
-    /* =================================================
-       TIME TRACKING (CALLED BY TIMER)
-    ================================================= */
-    public void addStudySecond() {
-        repo.findByActiveTrue().ifPresent(todo -> {
-            todo.setActualStudySeconds(
-                todo.getActualStudySeconds() + 1
-            );
+    public void addStudySecond(User user) {
+        repo.findByUserAndActiveTrue(user).ifPresent(todo -> {
+            todo.setActualStudySeconds(todo.getActualStudySeconds() + 1);
             repo.save(todo);
         });
     }
 
-    public void addBreakSecond() {
-        repo.findByActiveTrue().ifPresent(todo -> {
-            todo.setActualBreakSeconds(
-                todo.getActualBreakSeconds() + 1
-            );
+    public void addBreakSecond(User user) {
+        repo.findByUserAndActiveTrue(user).ifPresent(todo -> {
+            todo.setActualBreakSeconds(todo.getActualBreakSeconds() + 1);
             repo.save(todo);
         });
     }

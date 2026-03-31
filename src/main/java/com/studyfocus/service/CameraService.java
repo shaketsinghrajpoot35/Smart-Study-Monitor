@@ -48,18 +48,23 @@ public class CameraService {
 
     /**
      * Updates the current frame with a new one received from the frontend.
+     * Releases previous frame memory immediately to save space.
      */
     public synchronized void updateFrame(Mat newFrame) {
         if (newFrame != null && !newFrame.empty()) {
+            if (this.currentFrame != null) {
+                this.currentFrame.release(); 
+            }
             this.currentFrame = newFrame;
         }
     }
 
     /**
-     * Retrieves the latest frame for processing.
+     * Retrieves the latest frame reference.
+     * The processing service is responsible for copying if needed.
      */
     public synchronized Mat getFrame() {
-        return currentFrame.clone();
+        return currentFrame;
     }
 }
 

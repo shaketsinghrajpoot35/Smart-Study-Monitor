@@ -78,15 +78,18 @@ public class DrowsinessMonitorService {
 
     // ================= CORE CV =================
     private void analyzeFrame() {
-        try {
-            Mat frame = cameraService.getFrame();
-            if (frame.empty()) return;
+        Mat frame = cameraService.getFrame();
+        if (frame == null || frame.empty()) return;
 
-            Mat gray = new Mat();
+        Mat gray = new Mat();
+        MatOfRect faces = new MatOfRect();
+        MatOfRect eyes = new MatOfRect();
+        Mat eyeROI = null;
+
+        try {
             Imgproc.cvtColor(frame, gray, Imgproc.COLOR_BGR2GRAY);
             Imgproc.equalizeHist(gray, gray);
 
-            MatOfRect faces = new MatOfRect();
             faceDetector.detectMultiScale(
                     gray, faces, 1.1, 5, 0,
                     new Size(80, 80), new Size()
@@ -98,7 +101,6 @@ public class DrowsinessMonitorService {
             if (faceArray.length == 0) {
                 noFaceFrames++;
                 closedEyeFrames = 0;
-
                 if (noFaceFrames >= NO_FACE_THRESHOLD) {
                     faceDetected = false;
                     drowsy = false;
@@ -123,9 +125,8 @@ public class DrowsinessMonitorService {
                     (int)(face.height * 0.55)
             );
 
-            Mat eyeROI = gray.submat(eyeRegion);
+            eyeROI = gray.submat(eyeRegion);
 
-            MatOfRect eyes = new MatOfRect();
             eyeDetector.detectMultiScale(
                     eyeROI, eyes, 1.1, 5, 0,
                     new Size(25, 15), new Size()
@@ -143,6 +144,12 @@ public class DrowsinessMonitorService {
 
         } catch (Exception e) {
             System.out.println("⚠️ CV skip: " + e.getMessage());
+        } finally {
+            // CRITICAL: Explicitly release native memory
+            if (gray != null) gray.release();
+            if (faces != null) faces.release();
+            if (eyes != null) eyes.release();
+            if (eyeROI != null) eyeROI.release();
         }
     }
 

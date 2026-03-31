@@ -33,26 +33,33 @@
 package com.studyfocus.service;
 
 import org.opencv.core.Mat;
-import org.opencv.videoio.VideoCapture;
 import org.springframework.stereotype.Service;
 
 @Service
 public class CameraService {
 
-    private final VideoCapture camera;
+    private volatile Mat currentFrame;
 
     public CameraService() {
-        camera = new VideoCapture(0); // default webcam
-        if (!camera.isOpened()) {
-            throw new RuntimeException("❌ Cannot open camera");
-        }
-        System.out.println("📷 Camera opened");
+        // Initialize with an empty frame
+        currentFrame = new Mat();
+        System.out.println("📷 CameraService initialized (Remote mode)");
     }
 
+    /**
+     * Updates the current frame with a new one received from the frontend.
+     */
+    public synchronized void updateFrame(Mat newFrame) {
+        if (newFrame != null && !newFrame.empty()) {
+            this.currentFrame = newFrame;
+        }
+    }
+
+    /**
+     * Retrieves the latest frame for processing.
+     */
     public synchronized Mat getFrame() {
-        Mat frame = new Mat();
-        camera.read(frame);
-        return frame;
+        return currentFrame.clone();
     }
 }
 

@@ -141,7 +141,8 @@
                 </div>
                 
                 <div class="relative rounded-xl overflow-hidden bg-black/50 aspect-video border border-white/10 shadow-inner">
-                    <img src="/video" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition duration-500" alt="Camera Feed">
+                    <video id="webcam" autoplay muted playsinline class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition duration-500"></video>
+                    <canvas id="screenshotCanvas" class="hidden"></canvas>
                     
                     <!-- Overlay Status Indicator -->
                     <div id="statusOverlay" class="absolute bottom-4 right-4 px-3 py-1 rounded-full bg-black/60 backdrop-blur border border-white/20 text-xs font-bold flex items-center shadow-lg">
@@ -391,21 +392,76 @@ async function loadWeeklyChart() {
     } catch(e) { console.warn('Chart load failed', e); }
 }
 
-/* ================= NOISE SIMULATOR / MIC ================= */
+/* ================= FRONTEND CAMERA & MIC LOGIC ================= */
+const video = document.getElementById('webcam');
+const canvas = document.getElementById('screenshotCanvas');
+let stream = null;
 let analyser;
 let currentNoiseLvl = 0;
-try {
-    navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
-        const ctx=new AudioContext();
-        analyser=ctx.createAnalyser();
-        ctx.createMediaStreamSource(stream).connect(analyser);
-        const data=new Uint8Array(analyser.frequencyBinCount);
-        setInterval(()=>{
-            analyser.getByteFrequencyData(data);
-            currentNoiseLvl = Math.min(100, Math.floor(data.reduce((a,b)=>a+b,0)/data.length));
-        },400);
-    }).catch(e => console.log("Mic access denied or unavailable", e));
-} catch(e) {}
+
+async function startMonitoring() {
+    try {
+        // Request both Video & Audio at once
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { width: 480, height: 360, frameRate: 15 },
+            audio: true 
+        });
+        
+        // Setup Video
+        video.srcObject = stream;
+        console.log("✅ Camera & Mic started");
+
+        // Setup Audio Analyser
+        const ctx = new AudioContext();
+        analyser = ctx.createAnalyser();
+        const source = ctx.createMediaStreamSource(stream);
+        source.connect(analyser);
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        
+        setInterval(() => {
+            if (analyser) {
+                analyser.getByteFrequencyData(data);
+                currentNoiseLvl = Math.min(100, Math.floor(data.reduce((a, b) => a + b, 0) / data.length));
+            }
+        }, 400);
+        
+        // Start uploading frames & noise status
+        setInterval(uploadFrame, 500); 
+    } catch (err) {
+        console.error("❌ Media access denied:", err);
+        document.getElementById("statusText").innerText = "ACCESS DENIED";
+        document.getElementById("statusIcon").innerText = "🚫";
+    }
+}
+
+async function uploadFrame() {
+    if (!video || !stream) return;
+    
+    const context = canvas.getContext('2d');
+    canvas.width = 400; 
+    canvas.height = 300;
+    
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.6); 
+    
+    // Threshold matches UI logic (65)
+    const isNoisy = currentNoiseLvl > 65;
+    
+    try {
+        await fetch('/api/camera/frame', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                image: dataUrl,
+                isNoisy: isNoisy
+            })
+        });
+    } catch (err) {
+        // Silently fail
+    }
+}
+
+document.addEventListener('DOMContentLoaded', startMonitoring);
 
 /* ================= CORE REFRESH LOOP ================= */
 async function refresh() {

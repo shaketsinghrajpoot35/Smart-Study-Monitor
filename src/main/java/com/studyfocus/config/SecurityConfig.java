@@ -35,7 +35,7 @@ public class SecurityConfig {
                 .csrfTokenRepository(csrfRepo)
                 .csrfTokenRequestHandler(csrfHandler)
                 // API endpoints called from JS will read cookie — allow /api paths
-                .ignoringRequestMatchers("/timer/**", "/todo/**", "/status", "/video")
+                .ignoringRequestMatchers("/timer/**", "/todo/**", "/status", "/video", "/api/camera/**")
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()

@@ -1,0 +1,17 @@
+.git
+.gitignore
+.settings
+.classpath
+.project
+.vscode
+target/
+.mvn
+mvnw
+mvnw.cmd
+bin/
+README.md
+Dockerfile
+.dockerignore
+implementation_plan.md
+task.md
+deployment_guide.md

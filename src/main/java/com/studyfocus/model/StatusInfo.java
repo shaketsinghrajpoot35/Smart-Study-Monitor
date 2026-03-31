@@ -15,6 +15,26 @@ public class StatusInfo {
 	private int remainingSeconds; // study / break remaining time
 	private String timerMode; // STUDY / BREAK
 
+	// ===== ADAPTIVE BREAK FIELDS (NEW) =====
+	private boolean suggestBreak;
+	private String breakRecommendation;
+
+	public boolean isSuggestBreak() {
+		return suggestBreak;
+	}
+
+	public void setSuggestBreak(boolean suggestBreak) {
+		this.suggestBreak = suggestBreak;
+	}
+
+	public String getBreakRecommendation() {
+		return breakRecommendation;
+	}
+
+	public void setBreakRecommendation(String breakRecommendation) {
+		this.breakRecommendation = breakRecommendation;
+	}
+
 	public int getFocusScore() {
 		return focusScore;
 	}

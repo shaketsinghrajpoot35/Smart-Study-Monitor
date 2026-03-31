@@ -57,6 +57,25 @@ public class TimerService {
         state.activeTodoId = todoId;
     }
 
+    public synchronized void switchToBreak(User user) {
+        if (user == null) return;
+        TimerState state = getTimerForUser(user);
+        
+        if (state.mode == Mode.STUDY) {
+            // Flush current study time
+            if (state.pendingStudySeconds > 0) {
+                todoService.addStudySeconds(user, state.pendingStudySeconds);
+                dataSaverService.addStudyOrBreakTime(user, true, state.pendingStudySeconds);
+                state.pendingStudySeconds = 0;
+            }
+            
+            // Switch to break
+            state.mode = Mode.BREAK;
+            state.remainingSeconds = state.breakSeconds;
+            System.out.println("🤖 AI Break Triggered for user: " + user.getUsername());
+        }
+    }
+
     public synchronized void stopTimer(User user) {
         if (user == null) return;
         TimerState state = getTimerForUser(user);

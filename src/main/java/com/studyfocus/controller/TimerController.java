@@ -44,6 +44,14 @@ public class TimerController {
         }
     }
 
+    @PostMapping("/timer/switch-to-break")
+    public void switchToBreak(Authentication auth) {
+        User user = getUser(auth);
+        if (user != null) {
+            timerService.switchToBreak(user);
+        }
+    }
+
     @GetMapping("/timer")
     public Map<String, Object> getTimer(Authentication auth) {
         User user = getUser(auth);

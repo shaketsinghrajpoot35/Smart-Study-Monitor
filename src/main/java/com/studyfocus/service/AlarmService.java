@@ -25,24 +25,11 @@ public class AlarmService {
 
     // ================= PLAY =================
     public synchronized void play(String key) {
-        Clip clip = clips.get(key);
-        if (clip == null) return;
-
-        stop(); // stop previous sound
-
-        clip.setFramePosition(0);
-        clip.start();
-        currentClip = clip;
-
-        System.out.println("🔊 Playing sound: " + key);
+        // No-op: handled by browser
     }
 
     // ================= STOP =================
     public synchronized void stop() {
-        if (currentClip != null && currentClip.isRunning()) {
-            currentClip.stop();
-            System.out.println("🔇 Sound stopped");
-        }
-        currentClip = null;
+        // No-op: handled by browser
     }
 }

@@ -10,14 +10,10 @@ public class SmartStudyMonitorApplication {
 
     static {
         try {
-            // Load OpenCV Java DLL
-            System.load("C:/opencv/build/java/x64/opencv_java490.dll");
-
-            // Load OpenCV video backend DLLs
-            System.load("C:/opencv/build/x64/vc16/bin/opencv_videoio_ffmpeg490_64.dll");
-
-            System.out.println("✅ OpenCV native libraries loaded manually");
-        } catch (UnsatisfiedLinkError e) {
+            // Load OpenCV native libraries automatically (Cross-Platform)
+            nu.pattern.OpenCV.loadShared();
+            System.out.println("✅ OpenCV native libraries loaded successfully");
+        } catch (Exception e) {
             System.err.println("❌ Failed to load OpenCV native libs");
             e.printStackTrace();
         }

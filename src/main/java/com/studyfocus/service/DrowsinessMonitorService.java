@@ -69,7 +69,7 @@ public class DrowsinessMonitorService {
         Thread t = new Thread(() -> {
             while (true) {
                 analyzeFrame();
-                try { Thread.sleep(100); } catch (Exception ignored) {}
+                try { Thread.sleep(250); } catch (Exception ignored) {}
             }
         });
         t.setDaemon(true);

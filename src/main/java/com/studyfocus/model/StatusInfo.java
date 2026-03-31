@@ -123,6 +123,17 @@ public class StatusInfo {
 		this.studiedSecondsToday = studiedSecondsToday;
 	}
 
+	// ===== ALARM FIELDS (NEW) =====
+	private String alarmType; // noface, drowsy, breakend
+
+	public String getAlarmType() {
+		return alarmType;
+	}
+
+	public void setAlarmType(String alarmType) {
+		this.alarmType = alarmType;
+	}
+
 	// ===== NEW TIMER GETTERS / SETTERS =====
 
 	public int getRemainingSeconds() {

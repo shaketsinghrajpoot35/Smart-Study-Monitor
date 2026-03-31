@@ -14,31 +14,13 @@ public class AlarmService {
     private Clip currentClip = null;
 
     public AlarmService() {
-        loadSound("alarm", "/alarm.wav");
-        loadSound("drowsy", "/drowsy.wav");
-        loadSound("noface", "/no_face.wav");
-        loadSound("breakend", "/break_end.wav");
+        // Sounds are now handled by the frontend (dashboard.html)
+        // to support cloud deployment without server audio hardware.
     }
 
     // ================= LOAD =================
     private void loadSound(String key, String path) {
-        try {
-            InputStream is = getClass().getResourceAsStream(path);
-            if (is == null) {
-                System.out.println("❌ Sound not found: " + path);
-                return;
-            }
-
-            AudioInputStream audioStream = AudioSystem.getAudioInputStream(is);
-            Clip clip = AudioSystem.getClip();
-            clip.open(audioStream);
-
-            clips.put(key, clip);
-            System.out.println("🔔 Loaded sound: " + path);
-
-        } catch (Exception e) {
-            System.out.println("❌ Error loading " + path + " : " + e.getMessage());
-        }
+        // No-op: server-side audio is disabled
     }
 
     // ================= PLAY =================

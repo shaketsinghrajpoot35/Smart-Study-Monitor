@@ -69,7 +69,7 @@ public class DrowsinessMonitorService {
         Thread t = new Thread(() -> {
             while (true) {
                 analyzeFrame();
-                try { Thread.sleep(300); } catch (Exception ignored) {}
+                try { Thread.sleep(100); } catch (Exception ignored) {}
             }
         });
         t.setDaemon(true);
@@ -120,7 +120,7 @@ public class DrowsinessMonitorService {
                     face.x,
                     face.y,
                     face.width,
-                    (int)(face.height * 0.45)
+                    (int)(face.height * 0.55)
             );
 
             Mat eyeROI = gray.submat(eyeRegion);

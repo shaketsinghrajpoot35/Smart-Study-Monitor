@@ -117,22 +117,20 @@ public class StatusService {
             if (userFocusHistory.containsKey(user.getId())) userFocusHistory.get(user.getId()).clear();
         }
 
-        // ===== FINAL ALARM LOGIC =====
+        // ===== FINAL ALARM LOGIC (TRIGGERED ON FRONTEND) =====
         boolean isBreakTime = tState.mode == TimerService.Mode.BREAK;
         if (!isBreakTime) {
-
             if (!faceDetected) {
-                alarm.play("noface");
+                status.setAlarmType("noface");
             }
             else if (drowsy) {
-                alarm.play("drowsy");
+                status.setAlarmType("drowsy");
             }
             else {
-                alarm.stop();
+                status.setAlarmType(null);
             }
-
         } else {
-            alarm.stop(); // break time always silent
+            status.setAlarmType(null); // silent during break
         }
 
         return status;

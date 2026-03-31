@@ -445,6 +445,38 @@ let stream = null;
 let analyser;
 let currentNoiseLvl = 0;
 
+/* ================= AUDIO MANAGER (NEW) ================= */
+const audioAssets = {
+    alarm: new Audio('/audio/alarm.wav'),
+    drowsy: new Audio('/audio/drowsy.wav'),
+    noface: new Audio('/audio/no_face.wav'),
+    breakend: new Audio('/audio/break_end.wav')
+};
+
+// Loop alarms
+audioAssets.alarm.loop = true;
+audioAssets.drowsy.loop = true;
+audioAssets.noface.loop = true;
+
+const AudioManager = {
+    current: null,
+    play: function(key) {
+        if (!audioAssets[key]) return;
+        if (this.current === key) return; // already playing
+        this.stop();
+        audioAssets[key].play().catch(e => console.warn("Audio play blocked: Interaction required."));
+        this.current = key;
+        console.log("🔊 Playing audio:", key);
+    },
+    stop: function() {
+        if (this.current && audioAssets[this.current]) {
+            audioAssets[this.current].pause();
+            audioAssets[this.current].currentTime = 0;
+        }
+        this.current = null;
+    }
+};
+
 async function startMonitoring() {
     try {
         // Request both Video & Audio at once
@@ -471,8 +503,8 @@ async function startMonitoring() {
             }
         }, 400);
         
-        // Start uploading frames & noise status
-        setInterval(uploadFrame, 500); 
+        // Start uploading frames & noise status (QUICKER UPLOAD: 300ms)
+        setInterval(uploadFrame, 300); 
     } catch (err) {
         console.error("❌ Media access denied:", err);
         document.getElementById("statusText").innerText = "ACCESS DENIED";
@@ -488,10 +520,10 @@ async function uploadFrame() {
     canvas.height = 300;
     
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.6); 
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.4); 
     
-    // Threshold matches UI logic (65)
-    const isNoisy = currentNoiseLvl > 65;
+    // Threshold matches UI logic (75 - Less sensitive)
+    const isNoisy = currentNoiseLvl > 75;
     
     try {
         await fetch('/api/camera/frame', {
@@ -579,6 +611,13 @@ async function refresh() {
             document.getElementById("timerDisplay").innerText = "00:00";
             modeBadge.innerText = "IDLE";
             modeBadge.className = "text-xs font-bold px-2 py-1 rounded-md bg-gray-600/50 text-gray-300";
+        }
+
+        // Alarm Audio Logic (NEW)
+        if (statusData.alarmType) {
+            AudioManager.play(statusData.alarmType);
+        } else {
+            AudioManager.stop();
         }
 
         // Adaptive Break Handling
@@ -744,7 +783,7 @@ async function loadTodos() {
     } catch(e) {}
 }
 
-setInterval(refresh, 1000);
+setInterval(refresh, 500);
 refresh();
 loadTodos();
 loadWeeklyChart();

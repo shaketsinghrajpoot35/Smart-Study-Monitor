@@ -12,6 +12,8 @@ bin/
 README.md
 Dockerfile
 .dockerignore
+render.yaml
 implementation_plan.md
 task.md
 deployment_guide.md
+render_deployment_guide.md
